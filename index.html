@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Airgap — Closed Loop v3</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TOKENS ── */
+:root[data-theme="dark"] {
+  --bg:         #0a0806;
+  --bg2:        #0f0b07;
+  --surface:    rgba(32,25,18,0.50);
+  --surface2:   rgba(56,42,28,0.42);
+  --border:     rgba(255,180,90,0.12);
+  --border2:    rgba(255,180,90,0.26);
+  --text:       #ddd1c2;
+  --text2:      #9c8c78;
+  --text3:      #5f5141;
+  --heading:    #fff4e8;
+  --accent:     #ff9d3c;
+  --accent-dim: rgba(255,157,60,0.12);
+  --accent-b:   rgba(255,157,60,0.32);
+  --green:      #46d6a0;
+  --green-dim:  rgba(70,214,160,0.10);
+  --green-b:    rgba(70,214,160,0.24);
+  --orange:     #ff9d3c;
+  --orange-dim: rgba(255,157,60,0.12);
+  --orange-b:   rgba(255,157,60,0.28);
+  --red:        #ff5d6c;
+  --red-dim:    rgba(255,93,108,0.10);
+  --red-b:      rgba(255,93,108,0.24);
+  --gold:       #ffc24b;
+  --gold-dim:   rgba(255,194,75,0.10);
+  --gold-b:     rgba(255,194,75,0.24);
+  --purple:     #6ab8ff;
+  --purple-dim: rgba(106,184,255,0.10);
+  --purple-b:   rgba(106,184,255,0.24);
+  --mono:       'IBM Plex Mono', monospace;
+  --sans:       'Inter', sans-serif;
+  --title:      'Space Grotesk', sans-serif;
+  --shadow:     0 4px 24px rgba(0,0,0,0.45);
+  --shadow-lg:  0 12px 48px rgba(0,0,0,0.6);
+  --gauge-bg:   #1b130b;
+  --log-bg:     rgba(0,0,0,0.4);
+  --input-bg:   rgba(255,255,255,0.04);
+  --input-b:    rgba(255,180,90,0.16);
+  --tbl-head:   rgba(255,255,255,0.03);
+  --tbl-hover:  rgba(255,157,60,0.06);
+  --scroll:     rgba(255,255,255,0.07);
+  --scroll-h:   rgba(255,157,60,0.3);
+  --modal-bg:   #15100b;
+  --modal-ov:   rgba(0,0,0,0.82);
+}
+:root[data-theme="light"] {
+  --bg:         #f5ecdf;
+  --bg2:        #efe4d3;
+  --surface:    rgba(255,251,245,0.66);
+  --surface2:   rgba(252,244,233,0.6);
+  --border:     rgba(176,116,40,0.16);
+  --border2:    rgba(176,116,40,0.30);
+  --text:       #4c3f30;
+  --text2:      #8a7458;
+  --text3:      #b3a081;
+  --heading:    #2c2018;
+  --accent:     #d97a16;
+  --accent-dim: rgba(217,122,22,0.12);
+  --accent-b:   rgba(217,122,22,0.32);
+  --green:      #1f9e6a;
+  --green-dim:  rgba(31,158,106,0.10);
+  --green-b:    rgba(31,158,106,0.24);
+  --orange:     #d97a16;
+  --orange-dim: rgba(217,122,22,0.12);
+  --orange-b:   rgba(217,122,22,0.28);
+  --red:        #d6454f;
+  --red-dim:    rgba(214,69,79,0.10);
+  --red-b:      rgba(214,69,79,0.24);
+  --gold:       #c08a18;
+  --gold-dim:   rgba(192,138,24,0.10);
+  --gold-b:     rgba(192,138,24,0.24);
+  --purple:     #2f7fd6;
+  --purple-dim: rgba(47,127,214,0.10);
+  --purple-b:   rgba(47,127,214,0.24);
+  --shadow:     0 4px 20px rgba(120,80,30,0.10);
+  --shadow-lg:  0 12px 40px rgba(120,80,30,0.16);
+  --gauge-bg:   #e9dcc8;
+  --log-bg:     rgba(255,250,242,0.7);
+  --input-bg:   rgba(255,255,255,0.72);
+  --input-b:    rgba(160,110,40,0.22);
+  --tbl-head:   rgba(176,116,40,0.06);
+  --tbl-hover:  rgba(217,122,22,0.06);
+  --scroll:     rgba(120,80,30,0.14);
+  --scroll-h:   rgba(217,122,22,0.4);
+  --modal-bg:   #fdf7ee;
+  --modal-ov:   rgba(60,40,20,0.4);
+}
+
+/* ── BASE ── */
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: background .2s, color .2s;
+  position: relative;
+}
+
+/* ── ANIMATED AMBER PARTICLE BACKGROUND ── */
+.bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(ellipse 90% 70% at 50% 58%,rgba(120,70,18,0.22),transparent 60%),#0a0806}
+#fxCanvas{position:absolute;inset:0;width:100%;height:100%}
+.bg-fx .amber-glow{position:absolute;left:50%;top:60%;width:90vw;height:60vh;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse at center,rgba(214,120,30,0.20),transparent 65%);filter:blur(40px)}
+[data-theme="light"] .bg-fx{
+  background:radial-gradient(ellipse 90% 70% at 50% 50%,rgba(255,210,150,0.45),transparent 60%),
+             linear-gradient(180deg,#f7efe2 0%,#f1e6d4 100%);
+}
+[data-theme="light"] #fxCanvas{display:none}
+[data-theme="light"] .amber-glow{background:radial-gradient(ellipse at center,rgba(255,180,90,0.28),transparent 65%)}
+/* keep all UI above the background */
+.topbar,.wrap{position:relative;z-index:2}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-h); }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: var(--shadow);
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.brand-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.brand-name {
+  font-family: var(--title);
+  font-size: 16px; font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--heading);
+}
+.brand-sub {
+  font-family: var(--mono);
+  font-size: 9px; color: var(--text2);
+  letter-spacing: .08em;
+}
+.topbar-badges { display: flex; gap: 5px; }
+.tbadge {
+  font-family: var(--mono); font-size: 9px;
+  padding: 2px 8px; border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  letter-spacing: .04em;
+}
+.tbadge.c-accent { border-color: var(--accent-b); color: var(--accent); background: var(--accent-dim); }
+.tbadge.c-green  { border-color: var(--green-b);  color: var(--green);  background: var(--green-dim);  }
+.tbadge.c-red    { border-color: var(--red-b);    color: var(--red);    background: var(--red-dim);    }
+.tbadge.c-gold   { border-color: var(--gold-b);   color: var(--gold);   background: var(--gold-dim);   }
+
+/* Connection pill */
+.conn-pill {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 4px 12px;
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  transition: all .3s;
+}
+.conn-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text3); flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
+}
+.conn-dot.ok  { background: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+.conn-dot.err { background: var(--red); }
+
+/* Theme toggle */
+.theme-wrap { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.theme-emoji { font-size: 14px; cursor: pointer; user-select: none; }
+.theme-toggle {
+  width: 36px; height: 20px; border-radius: 100px;
+  border: 1px solid var(--border2); background: var(--surface2);
+  cursor: pointer; position: relative; transition: all .2s;
+  flex-shrink: 0;
+}
+.theme-toggle::after {
+  content: ''; position: absolute;
+  width: 14px; height: 14px; border-radius: 50%;
+  top: 2px; left: 2px;
+  background: var(--text2);
+  transition: transform .2s, background .2s;
+}
+[data-theme="light"] .theme-toggle::after {
+  transform: translateX(16px); background: var(--accent);
+}
+.topbar-btns { display: flex; gap: 7px; }
+
+/* ── LAYOUT (sequential flow) ── */
+.wrap { max-width: 1520px; margin: 0 auto; padding: 18px 18px 80px; }
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 860px;
+  margin: 0 auto;
+  counter-reset: step;
+}
+.db-section { max-width: 860px; margin: 16px auto 0; }
+.col { display: contents; }
+
+/* step number badge shown in card titles */
+.stepno{
+  width:22px;height:22px;border-radius:7px;flex-shrink:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:var(--accent);background:var(--accent-dim);
+  border:1px solid var(--accent-b);letter-spacing:0;
+}
+.card-title .stepno{margin-right:2px}
+.stats-2col{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+@media (max-width:560px){.stats-2col{grid-template-columns:1fr}}
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backdrop-filter: blur(20px) saturate(120%);
+  transition: background .2s, border-color .2s;
+}
+[data-theme="light"] .card{-webkit-backdrop-filter:blur(16px) saturate(115%);backdrop-filter:blur(16px) saturate(115%)}
+.card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 12px 12px 0 0;
+  opacity: 0;
+}
+.card.c-accent::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: .5; }
+.card.c-green::before  { background: linear-gradient(90deg, transparent, var(--green),  transparent); opacity: .55; }
+.card.c-gold::before   { background: linear-gradient(90deg, transparent, var(--gold),   transparent); opacity: .55; }
+.card.c-red::before    { background: linear-gradient(90deg, transparent, var(--red),    transparent); opacity: .5; }
+.card.c-purple::before { background: linear-gradient(90deg, transparent, var(--purple), transparent); opacity: .45; }
+.card.c-orange::before { background: linear-gradient(90deg, transparent, var(--orange), transparent); opacity: .5; }
+
+.card-title {
+  font-size: 9px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 13px;
+  display: flex; align-items: center; gap: 7px;
+}
+.ct-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--text3); flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
+}
+.ct-dot.live { background: var(--green); box-shadow: 0 0 0 3px var(--green-dim); }
+.ct-tag {
+  font-family: var(--mono); font-size: 8px;
+  padding: 1px 6px; border-radius: 4px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid var(--accent-b);
+}
+.divider { border: none; border-top: 1px solid var(--border); margin: 11px 0; }
+
+/* ── SAFETY BANNER ── */
+.safety-banner {
+  background: var(--red-dim); border: 1px solid var(--red-b);
+  border-radius: 7px; padding: 7px 11px; margin-bottom: 10px;
+  font-family: var(--mono); font-size: 9px; color: var(--red);
+  letter-spacing: .06em; line-height: 1.6;
+}
+
+/* ── DUTY FIXED BANNER ── */
+.duty-banner {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 11px; margin-bottom: 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--orange);
+  letter-spacing: .05em; text-align: center;
+}
+
+/* ── INPUTS ── */
+.field { margin-bottom: 9px; }
+.field label {
+  display: block; font-size: 9px; font-weight: 600;
+  color: var(--text2); letter-spacing: .07em;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.field input, .field select {
+  width: 100%;
+  background: var(--input-bg); border: 1px solid var(--input-b);
+  border-radius: 7px; padding: 7px 10px;
+  color: var(--heading); font-family: var(--mono); font-size: 12px;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+.field input[readonly] { opacity: .5; cursor: not-allowed; }
+.row { display: flex; gap: 7px; }
+.row .field { flex: 1; margin-bottom: 0; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 14px; border-radius: 8px; border: 1px solid transparent;
+  cursor: pointer; font-family: var(--sans); font-size: 12px;
+  font-weight: 500; letter-spacing: .02em; white-space: nowrap;
+  transition: opacity .15s, transform .1s, box-shadow .2s;
+}
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn:disabled { opacity: .25; cursor: not-allowed; }
+.btn:not(:disabled):hover { opacity: .82; }
+.btn-primary { background: var(--accent); color: #001820; }
+.btn-green   { background: var(--green); color: #001810; }
+.btn-orange  { background: var(--orange); color: #1a0800; }
+.btn-red     { background: var(--red); color: #fff; }
+.btn-gold    { background: var(--gold); color: #1a1000; }
+.btn-purple  { background: var(--purple); color: #fff; }
+.btn-ghost   { background: transparent; border-color: var(--border2); color: var(--text2); }
+.btn-ghost:not(:disabled):hover { background: var(--surface2); }
+.btn-o-accent  { background: var(--accent-dim); border-color: var(--accent-b); color: var(--accent); }
+.btn-o-green   { background: var(--green-dim);  border-color: var(--green-b);  color: var(--green); }
+.btn-o-red     { background: var(--red-dim);    border-color: var(--red-b);    color: var(--red); }
+.btn-o-purple  { background: var(--purple-dim); border-color: var(--purple-b); color: var(--purple); }
+.btn-w   { width: 100%; }
+.btn-row { display: flex; gap: 7px; }
+.btn-row .btn { flex: 1; }
+
+/* BIG AUTO BUTTON */
+.btn-auto {
+  width: 100%; padding: 13px 16px;
+  background: linear-gradient(135deg, #008fb0, var(--accent));
+  color: #001820; border: none; border-radius: 9px;
+  font-family: var(--title); font-size: 14px; font-weight: 700;
+  letter-spacing: .1em;
+  box-shadow: 0 0 0 0 rgba(0,200,224,.25);
+  transition: box-shadow .3s, transform .15s, opacity .15s;
+}
+.btn-auto:not(:disabled):hover { box-shadow: 0 0 24px rgba(0,200,224,.45); }
+
+/* ── METRIC GRID ── */
+.metric-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin: 8px 0; }
+.metric-cell {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 8px; text-align: center;
+}
+.metric-val  { font-family: var(--mono); font-size: 16px; color: var(--heading); line-height: 1; }
+.metric-unit { font-size: 8px; color: var(--text3); letter-spacing: .09em; text-transform: uppercase; margin-top: 3px; }
+.metric-cell.c-a .metric-val  { color: var(--accent); }
+.metric-cell.c-g .metric-val  { color: var(--green); }
+.metric-cell.c-p .metric-val  { color: var(--purple); }
+
+/* ── FLUX HERO ── */
+.flux-hero-wrap { text-align: center; padding: 14px 8px 10px; }
+.flux-hero-lbl { font-family: var(--mono); font-size: 9px; letter-spacing: .18em; color: var(--text2); text-transform: uppercase; margin-bottom: 5px; }
+.flux-hero {
+  font-family: var(--title); font-size: 56px; font-weight: 700;
+  line-height: 1; color: var(--accent);
+  text-shadow: 0 0 32px rgba(0,200,224,.4);
+  min-height: 62px; display: flex; align-items: center; justify-content: center;
+  transition: color .35s, text-shadow .35s;
+}
+.flux-hero.pass { color: var(--green);  text-shadow: 0 0 32px rgba(34,217,122,.45); }
+.flux-hero.warn { color: var(--orange); text-shadow: 0 0 32px rgba(255,140,66,.4);  }
+.flux-hero.fail { color: var(--red);    text-shadow: 0 0 32px rgba(240,81,74,.4);   }
+.flux-unit { font-family: var(--mono); font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* Target bar */
+.target-bar {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 9px; color: var(--text3); margin: 9px 0 5px;
+}
+.tbar-track { flex: 1; height: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; position: relative; }
+.tbar-zone  { position: absolute; height: 100%; background: var(--green-dim); border: 1px solid var(--green-b); border-radius: 2px; }
+.tbar-needle { position: absolute; width: 2px; height: 100%; background: var(--accent); top: 0; transition: left .4s ease; box-shadow: 0 0 5px var(--accent); }
+.target-note { font-family: var(--mono); font-size: 9px; color: var(--text3); text-align: center; }
+
+/* Adaptive gain bars */
+.gain-bars { margin-top: 10px; }
+.gbar-row { display: flex; align-items: center; gap: 7px; font-size: 9px; font-family: var(--mono); margin-bottom: 5px; }
+.gbar-lbl { color: var(--text2); width: 58px; flex-shrink: 0; }
+.gbar-track { flex: 1; height: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.gbar-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; }
+.gbar-val   { font-size: 9px; width: 64px; text-align: right; flex-shrink: 0; }
+
+/* ── PHASE PILLS ── */
+.phase-row { display: flex; gap: 5px; margin: 8px 0; flex-wrap: wrap; }
+.phase-pill {
+  font-family: var(--mono); font-size: 8px; letter-spacing: .07em;
+  padding: 3px 8px; border-radius: 100px; border: 1px solid var(--border);
+  color: var(--text3); transition: all .25s;
+}
+.phase-pill.active { border-color: var(--accent-b); color: var(--accent); background: var(--accent-dim); }
+.phase-pill.done   { border-color: var(--green-b);  color: var(--green);  background: var(--green-dim); }
+
+/* ── AUTO STATUS BOX ── */
+.auto-status-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 11px 13px; margin: 9px 0; min-height: 62px;
+}
+.asp-phase { font-family: var(--title); font-size: 12px; letter-spacing: .08em; margin-bottom: 4px; transition: color .3s; }
+.asp-detail { font-family: var(--mono); font-size: 10px; color: var(--text2); line-height: 1.7; }
+
+/* ── PROGRESS ── */
+.prog-wrap { margin: 8px 0; }
+.prog-head { display: flex; justify-content: space-between; font-size: 10px; color: var(--text2); margin-bottom: 3px; }
+.prog-track { background: var(--surface2); border: 1px solid var(--border); border-radius: 100px; height: 7px; overflow: hidden; }
+.prog-fill  { height: 100%; width: 0%; border-radius: 100px; transition: width .3s ease, background .3s; background: var(--green); }
+
+/* ── RESULT BADGE ── */
+.result-badge {
+  display: none; text-align: center; padding: 14px; border-radius: 9px;
+  margin: 9px 0; font-family: var(--title); font-size: 20px;
+  letter-spacing: .1em; font-weight: 700;
+}
+.result-badge.pass { display: block; background: var(--green-dim); border: 1px solid var(--green-b); color: var(--green); box-shadow: 0 0 24px var(--green-dim); }
+.result-badge.fail { display: block; background: var(--red-dim);   border: 1px solid var(--red-b);   color: var(--red);   box-shadow: 0 0 24px var(--red-dim); }
+.result-sub { font-family: var(--mono); font-size: 9px; color: var(--text2); margin-top: 5px; font-weight: 400; font-family: var(--mono); }
+
+/* ── DB BANNER ── */
+.db-banner { display: none; text-align: center; padding: 6px 10px; border-radius: 6px; font-family: var(--mono); font-size: 9px; margin-top: 6px; }
+.db-banner.saved { display: block; background: var(--green-dim); border: 1px solid var(--green-b); color: var(--green); }
+.db-banner.err   { display: block; background: var(--red-dim); border: 1px solid var(--red-b); color: var(--red); }
+
+/* ── STEP CHIPS ── */
+.step-chips { display: flex; gap: 4px; flex-wrap: wrap; min-height: 22px; margin-top: 5px; }
+.chip {
+  font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 4px;
+  background: var(--accent-dim); border: 1px solid var(--accent-b); color: var(--accent);
+}
+.chip.rev   { background: var(--red-dim);  border-color: var(--red-b);  color: var(--red); }
+.chip.stick { background: var(--gold-dim); border-color: var(--gold-b); color: var(--gold); }
+
+/* ── CONV3 BADGE ── */
+.conv3-badge { display: none; font-family: var(--mono); font-size: 9px; padding: 2px 9px; border-radius: 100px; border: 1px solid var(--gold-b); color: var(--gold); background: var(--gold-dim); }
+.conv3-badge.show { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ── TACHOMETER ── */
+.tach-center { text-align: center; padding: 12px 6px 6px; }
+.tach-label  { font-size: 9px; letter-spacing: .14em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+.tach-value  { font-family: var(--mono); font-size: 38px; font-weight: 300; line-height: 1; color: var(--accent); transition: color .3s; }
+.tach-unit   { font-size: 9px; color: var(--text3); margin-top: 4px; }
+.gauge-svg-wrap { display: flex; justify-content: center; margin: 8px 0 4px; }
+
+/* ── STATS ROWS ── */
+.stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 10px; margin-bottom: 5px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--text2); }
+.stat-val   { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+
+/* ── PARAM GROUP ── */
+.param-group { margin-bottom: 12px; }
+.param-group-title { font-family: var(--mono); font-size: 8px; letter-spacing: .14em; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+
+/* ── LOG ── */
+.log-box {
+  background: var(--log-bg); border: 1px solid var(--border);
+  border-radius: 7px; padding: 8px 10px; font-family: var(--mono);
+  font-size: 9.5px; height: 148px; overflow-y: auto; line-height: 1.8; color: var(--text2);
+}
+.log-box .ok   { color: var(--green); }
+.log-box .er   { color: var(--red); }
+.log-box .inf  { color: var(--accent); }
+.log-box .hx   { color: var(--gold); }
+.log-box .auto { color: var(--purple); }
+.log-box .pass { color: var(--green); font-weight: 600; }
+.log-box .safe { color: var(--red); font-weight: 600; }
+
+/* ── DB TABLE (fullwidth row below layout) ── */
+.db-section { margin-top: 14px; }
+.db-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 11px; }
+.db-filter {
+  background: var(--input-bg); border: 1px solid var(--input-b);
+  border-radius: 7px; padding: 6px 10px; color: var(--heading);
+  font-family: var(--mono); font-size: 11px; outline: none; width: 200px;
+  transition: border-color .15s;
+}
+.db-filter:focus { border-color: var(--accent); }
+.db-count { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-left: auto; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 10px; }
+th {
+  background: var(--tbl-head); color: var(--text3);
+  text-transform: uppercase; letter-spacing: .07em; font-size: 8px;
+  padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border);
+  white-space: nowrap; font-weight: 600;
+}
+td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--tbl-hover); }
+td.c-a  { color: var(--accent); }
+td.c-g  { color: var(--green); }
+td.c-o  { color: var(--orange); }
+td.c-r  { color: var(--red); }
+td.c-gg { color: var(--gold); }
+td.c-p  { color: var(--purple); }
+.tbl-empty { text-align: center; padding: 30px; color: var(--text3); font-size: 11px; }
+.res-badge { font-family: var(--mono); font-size: 9px; padding: 2px 7px; border-radius: 4px; }
+.res-badge.pass { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-b); }
+.res-badge.fail { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-b);  }
+.del-btn {
+  background: none; border: 1px solid var(--red-b); color: var(--red);
+  border-radius: 4px; padding: 2px 7px; cursor: pointer;
+  font-size: 9px; font-family: var(--mono); opacity: .6;
+  transition: opacity .15s, background .15s;
+}
+.del-btn:hover { background: var(--red-dim); opacity: 1; }
+
+/* ── ANIMATIONS ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.pulsing { animation: pulse 1.1s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="bg-fx"><canvas id="fxCanvas"></canvas><span class="amber-glow"></span></div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">⚡</div>
+    <div>
+      <div class="brand-name">AUTO AIRGAP</div>
+      <div class="brand-sub">CLOSED LOOP v3</div>
+    </div>
+  </div>
+  <div class="topbar-badges">
+    <span class="tbadge c-accent">FLUX-ONLY</span>
+    <span class="tbadge c-red">SAFETY-STOP</span>
+    <span class="tbadge c-gold">MAX 3 ITER</span>
+    <span class="tbadge c-green">DUTY 0.05</span>
+  </div>
+  <div class="conn-pill">
+    <div class="conn-dot" id="connDot"></div>
+    <span id="connTxt">Disconnected</span>
+  </div>
+  <div class="theme-wrap">
+    <span class="theme-emoji" id="themeEmoji">☀</span>
+    <button class="theme-toggle" onclick="toggleTheme()"></button>
+  </div>
+  <div class="topbar-btns">
+    <button class="btn btn-orange" onclick="doConnect()" id="btnConnect">⚡ Connect VESC</button>
+    <button class="btn btn-red" onclick="doDisconnect()" id="btnDisc" disabled>✕ Disconnect</button>
+  </div>
+</div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="wrap">
+<div class="layout">
+
+  <!-- 01 · Motor Identity & Connection -->
+  <div class="card c-gold">
+    <div class="card-title"><span class="stepno">01</span>Motor Identity &amp; Connection</div>
+    <div class="row">
+      <div class="field"><label>Motor No / ID</label><input id="motorNo" placeholder="MTR-001" value="MTR-001"></div>
+      <div class="field"><label>Notes</label><input id="motorNotes" placeholder="batch, shift…"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>CAN Slave ID</label><input id="slaveId" value="6927" type="number"></div>
+      <div class="field"><label>Poll ms</label><input id="pollMs" value="200" type="number"></div>
+    </div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button class="btn btn-o-accent" id="btnPollStart" onclick="startPoll()" disabled>▶ Poll</button>
+      <button class="btn btn-o-red"    id="btnPollStop"  onclick="stopPoll()"  disabled>■ Stop</button>
+    </div>
+  </div>
+
+  <!-- 02 · Measure R, L & Flux -->
+  <div class="card c-purple">
+    <div class="card-title"><span class="stepno">02</span>Measure R, L &amp; Flux</div>
+    <div class="safety-banner">⛔ Motor fully stopped before every measurement</div>
+    <button class="btn btn-primary btn-w" id="btnRL" onclick="measureRL_safe()" disabled style="margin-bottom:8px;">Measure R &amp; L</button>
+    <div class="metric-grid">
+      <div class="metric-cell c-a"><div class="metric-val" id="rVal">—</div><div class="metric-unit">mΩ</div></div>
+      <div class="metric-cell c-a"><div class="metric-val" id="lVal">—</div><div class="metric-unit">µH</div></div>
+      <div class="metric-cell c-p"><div class="metric-val" id="rpmVal">—</div><div class="metric-unit">RPM/V</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="card-title" style="margin-bottom:10px;"><span class="ct-dot"></span>Flux Measurement Config</div>
+    <div class="row">
+      <div class="field"><label>Current A</label><input id="fCurrent" value="20"></div>
+      <div class="field"><label>ERPM</label><input id="fErpm" value="2000"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Duty</label><input id="fDuty" value="0.3"></div>
+      <div class="field"><label>R (mΩ)</label><input id="fRes" value="9.05"></div>
+    </div>
+    <div class="field"><label>L (µH)</label><input id="fInd" value="37.1"></div>
+    <button class="btn btn-purple btn-w" id="btnFlux" onclick="measureFlux_safe()" disabled>Measure Flux Linkage</button>
+  </div>
+
+  <!-- 03 · Slave Tachometer (live) -->
+  <div class="card c-accent">
+    <div class="card-title">
+      <span class="stepno">03</span>
+      Slave Tachometer
+      <span id="liveTag" style="font-family:var(--mono);font-size:8px;color:var(--text3);">IDLE</span>
+      <span class="ct-dot" id="liveCtDot" style="margin-left:6px;"></span>
+    </div>
+    <div class="tach-center">
+      <div class="tach-label">Tach Count</div>
+      <div class="tach-value" id="tachDisp">– – –</div>
+      <div class="tach-unit">counts</div>
+    </div>
+    <div class="gauge-svg-wrap">
+      <svg width="190" height="88" viewBox="0 0 220 105">
+        <path d="M25 105 A85 85 0 0 1 195 105" fill="none" stroke="var(--gauge-bg)" stroke-width="12" stroke-linecap="round"/>
+        <path id="gaugeFill" d="M25 105 A85 85 0 0 1 195 105" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 267" style="transition:stroke-dasharray .4s ease,stroke .3s;"/>
+        <text x="18"  y="100" fill="var(--text3)" font-family="IBM Plex Mono,monospace" font-size="8">0</text>
+        <text x="170" y="100" fill="var(--text3)" font-family="IBM Plex Mono,monospace" font-size="8">MAX</text>
+        <text id="gaugePct" x="110" y="82" text-anchor="middle" fill="var(--text3)" font-family="IBM Plex Mono,monospace" font-size="10">0%</text>
+      </svg>
+    </div>
+    <div class="metric-grid" style="margin-top:4px;">
+      <div class="metric-cell"><div class="metric-val" id="voltDisp">—</div><div class="metric-unit">V input</div></div>
+      <div class="metric-cell"><div class="metric-val" id="faultDisp" style="color:var(--green);">OK</div><div class="metric-unit">fault</div></div>
+      <div class="metric-cell"><div class="metric-val" id="pktsDisp">0</div><div class="metric-unit">pkts</div></div>
+    </div>
+  </div>
+
+  <!-- 04 · Live Flux Linkage + Gain -->
+  <div class="card c-green">
+    <div class="card-title"><span class="stepno">04</span>Live Flux Linkage <span class="ct-dot" id="fluxCtDot" style="margin-left:6px;"></span></div>
+    <div class="flux-hero-wrap">
+      <div class="flux-hero-lbl">Flux Linkage</div>
+      <div class="flux-hero" id="fluxHero">—.———</div>
+      <div class="flux-unit">mWb</div>
+      <div class="target-bar">
+        <span>7.5</span>
+        <div class="tbar-track">
+          <div class="tbar-zone" id="tbarZone"></div>
+          <div class="tbar-needle" id="tbarNeedle"></div>
+        </div>
+        <span>10.5</span>
+      </div>
+      <div class="target-note">Target: 9.75 – 9.80 mWb (±0.025)</div>
+    </div>
+    <div class="divider"></div>
+    <div class="card-title" style="margin-bottom:8px;"><span class="ct-dot"></span>Adaptive Gain Monitor</div>
+    <div class="gain-bars">
+      <div class="gbar-row">
+        <span class="gbar-lbl">k_est</span>
+        <div class="gbar-track"><div class="gbar-fill" id="kestFill" style="background:var(--accent);"></div></div>
+        <span class="gbar-val" style="color:var(--accent);" id="kestVal">0.009</span>
+      </div>
+      <div class="gbar-row">
+        <span class="gbar-lbl">error</span>
+        <div class="gbar-track"><div class="gbar-fill" id="errorFill" style="background:var(--orange);"></div></div>
+        <span class="gbar-val" style="color:var(--orange);" id="errorVal">—</span>
+      </div>
+      <div class="gbar-row">
+        <span class="gbar-lbl">next step</span>
+        <div class="gbar-track"><div class="gbar-fill" id="stepFill" style="background:var(--purple);"></div></div>
+        <span class="gbar-val" style="color:var(--purple);" id="stepVal">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 · Closed-Loop Control -->
+  <div class="card c-green">
+    <div class="card-title">
+      <span class="stepno">05</span>
+      Flux-Only Closed-Loop Control
+      <span id="autoModeTag" style="font-family:var(--mono);font-size:8px;color:var(--text3);">IDLE</span>
+      <span class="conv3-badge" id="conv3Badge">⚡ ≤3 ITER</span>
+    </div>
+    <div class="duty-banner">⚡ DRIVE DUTY FIXED: 0.05 &nbsp;|&nbsp; MAX FINE ITER: 3 &nbsp;|&nbsp; VERIFY: 1 READ</div>
+    <div class="phase-row">
+      <div class="phase-pill" id="phaseRL">R&L</div>
+      <div class="phase-pill" id="phaseInit">INIT</div>
+      <div class="phase-pill" id="phaseCoarse">COARSE</div>
+      <div class="phase-pill" id="phaseFine">FINE</div>
+      <div class="phase-pill" id="phaseVerify">VERIFY</div>
+    </div>
+    <button class="btn btn-auto" id="btnAutoStart" onclick="startAutoAdjust()" disabled>▶ &nbsp; START AUTO ADJUSTMENT</button>
+    <button class="btn btn-red btn-w" id="btnAutoStop" onclick="stopAutoAdjust()" disabled style="margin-top:6px;">■ &nbsp; ABORT</button>
+    <button class="btn btn-primary btn-w" id="btnSaveDb" onclick="saveCurrentSession()" disabled style="margin-top:6px;">💾 &nbsp; Save to Database</button>
+    <div class="result-badge" id="resultBadge"></div>
+    <div class="db-banner" id="dbBanner"></div>
+    <div class="auto-status-box">
+      <div class="asp-phase" id="autoPhase" style="color:var(--text2);">IDLE — Ready</div>
+      <div class="asp-detail" id="autoDetail">Connect serial, start polling, then press START.</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-head"><span>Convergence Progress</span><span id="progLbl">—</span></div>
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    </div>
+    <div class="card-title" style="margin: 9px 0 6px;"><span class="ct-dot"></span>Step History</div>
+    <div class="step-chips" id="stepChips"><span style="font-size:9px;color:var(--text3);">No steps yet</span></div>
+    <div class="divider"></div>
+    <div class="card-title" style="margin-bottom:8px;"><span class="ct-dot"></span>Manual Override</div>
+    <div class="row">
+      <div class="field"><label>Tach Offset</label><input id="manualOffset" value="10" type="number"></div>
+      <div class="field"><label>Duty (fixed 0.05)</label><input value="0.05" readonly></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-o-green" onclick="manualStep(1)"  id="btnFwd" disabled>↑ FWD</button>
+      <button class="btn btn-o-red"   onclick="manualStep(-1)" id="btnRev" disabled>↓ REV</button>
+    </div>
+  </div>
+
+  <!-- 06 · Automation Parameters -->
+  <div class="card c-gold">
+    <div class="card-title"><span class="stepno">06</span>Automation Parameters</div>
+
+    <div class="param-group">
+      <div class="param-group-title">Targets</div>
+      <div class="field"><label>Target Centre (mWb)</label><input id="pTarget" value="9.75" type="number" step="0.001"></div>
+      <div class="field"><label>Accept Band ± (mWb) — fixed 0.025</label><input id="pBand" value="0.025" type="number" step="0.001" readonly></div>
+      <div class="field"><label>Dead Band ± (mWb)</label><input id="pDead" value="0.020" type="number" step="0.001"></div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-group-title">Gain &amp; Sensitivity</div>
+      <div class="field"><label>k_nom (mWb/tach)</label><input id="pKnom" value="0.009" type="number" step="0.001"></div>
+      <div class="field"><label>k_est α (smoothing)</label><input id="pAlpha" value="0.45" type="number" step="0.05"></div>
+      <div class="row">
+        <div class="field"><label>k min</label><input id="pKmin" value="0.003" type="number" step="0.001"></div>
+        <div class="field"><label>k max</label><input id="pKmax" value="0.020" type="number" step="0.001"></div>
+      </div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-group-title">Step Limits</div>
+      <div class="row">
+        <div class="field"><label>Coarse max</label><input id="pCoarseMax" value="180" type="number"></div>
+        <div class="field"><label>Coarse min</label><input id="pCoarseMin" value="30" type="number"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Fine max</label><input id="pFineMax" value="10" type="number"></div>
+        <div class="field"><label>Fine min</label><input id="pFineMin" value="1" type="number"></div>
+      </div>
+      <div class="field"><label>Overshoot cap</label><input id="pOvMax" value="5" type="number"></div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-group-title">Delays (ms)</div>
+      <div class="row">
+        <div class="field"><label>Coarse settle</label><input id="pCoarseDelay" value="2000" type="number"></div>
+        <div class="field"><label>Fine settle</label><input id="pFineDelay" value="3000" type="number"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Dir-change +</label><input id="pRevDelay" value="3500" type="number"></div>
+        <div class="field"><label>Verify delay</label><input id="pVerifyDelay" value="3000" type="number"></div>
+      </div>
+      <div class="field"><label>Stop→Measure delay (ms)</label><input id="pStopDelay" value="800" type="number"></div>
+    </div>
+
+    <div class="param-group">
+      <div class="param-group-title">Safety Limits</div>
+      <div class="row">
+        <div class="field"><label>Max steps</label><input id="pMaxSteps" value="25" type="number"></div>
+        <div class="field"><label>Timeout (s)</label><input id="pTimeout" value="300" type="number"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Near-target</label><input id="pNearTarget" value="9.20" type="number" step="0.01"></div>
+        <div class="field"><label>Over-tight</label><input id="pOverTight" value="10.0" type="number" step="0.1"></div>
+      </div>
+      <div class="field"><label>High-R alert (mΩ)</label><input id="pHighR" value="9.5" type="number" step="0.1"></div>
+    </div>
+  </div>
+
+  <!-- Session Stats -->
+  <div class="card c-accent">
+    <div class="card-title"><span class="ct-dot"></span>Session Stats</div>
+    <div class="stats-2col">
+    <div class="stat-row"><span class="stat-label">Steps taken</span>    <span class="stat-val" id="sSSteps">0</span></div>
+    <div class="stat-row"><span class="stat-label">Fine iterations</span><span class="stat-val" id="sFineIter">0 / 3</span></div>
+    <div class="stat-row"><span class="stat-label">Total tach Δ</span>   <span class="stat-val" id="sTachTotal">0</span></div>
+    <div class="stat-row"><span class="stat-label">Last dir</span>        <span class="stat-val" id="sDir">—</span></div>
+    <div class="stat-row"><span class="stat-label">k_est</span>           <span class="stat-val" id="sKest">—</span></div>
+    <div class="stat-row"><span class="stat-label">Overshoots</span>     <span class="stat-val" id="sOv">0</span></div>
+    <div class="stat-row"><span class="stat-label">Stick-slips</span>    <span class="stat-val" id="sStick">0</span></div>
+    <div class="stat-row"><span class="stat-label">Elapsed</span>        <span class="stat-val" id="sElapsed">—</span></div>
+    <div class="stat-row"><span class="stat-label">Init flux</span>      <span class="stat-val" id="sInitFlux">—</span></div>
+    <div class="stat-row"><span class="stat-label">Final flux</span>     <span class="stat-val" id="sFinalFlux">—</span></div>
+    <div class="stat-row"><span class="stat-label">Verify flux</span>    <span class="stat-val" id="sVerifyFlux">—</span></div>
+    <div class="stat-row"><span class="stat-label">Conv in ≤3</span>     <span class="stat-val" id="sConv3">—</span></div>
+    </div>
+  </div>
+
+  <!-- Event Log -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:8px;">
+      <span class="ct-dot live" id="logDot"></span>
+      Event Log
+      <button onclick="clearLog()" style="background:none;border:1px solid var(--border2);color:var(--text3);border-radius:3px;padding:1px 7px;cursor:pointer;font-size:8px;font-family:var(--mono);margin-left:auto;">CLR</button>
+    </div>
+    <div class="log-box" id="logBox"></div>
+    <button class="btn btn-ghost btn-w" style="margin-top:6px;font-size:11px;" onclick="copyLog()">📋 Copy Log</button>
+  </div>
+
+</div><!-- /layout -->
+
+<!-- ══ DB TABLE ══ -->
+<div class="db-section">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:12px;font-size:10px;"><span class="stepno">07</span>Session Records — <span id="dbModeLabel">Connecting…</span><span class="ct-dot" id="dbDot" style="margin-left:6px;"></span></div>
+
+    <div class="db-toolbar">
+      <input class="db-filter" id="dbFilter" placeholder="Filter by motor no…" oninput="renderTable()">
+      <span class="db-count" id="dbCount">0 records</span>
+      <button class="btn btn-ghost"    onclick="loadRecords()"   style="width:auto;padding:6px 12px;font-size:10px;">⟳ Reload</button>
+      <button class="btn btn-o-green"  onclick="exportCSV()"     style="width:auto;padding:6px 12px;font-size:10px;">⬇ Export CSV</button>
+      <button class="btn btn-o-red"    onclick="clearAllDB()"    style="width:auto;padding:6px 12px;font-size:10px;">🗑 Clear All</button>
+    </div>
+    <div class="tbl-wrap">
+      <div id="dbContainer"><div class="tbl-empty">No records yet — run auto adjustment to create records</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+// THEME
+// ════════════════════════════════════════════════════════════
+function toggleTheme(){
+  const html=document.documentElement;
+  const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  document.getElementById('themeEmoji').textContent=next==='dark'?'☀':'☾';
+  localStorage.setItem('airgap_theme',next);
+}
+(function(){
+  const saved=localStorage.getItem('airgap_theme');
+  if(saved){document.documentElement.setAttribute('data-theme',saved);document.getElementById('themeEmoji').textContent=saved==='dark'?'☀':'☾';}
+})();
+
+// ════════════════════════════════════════════════════════════
+// VESC PROTOCOL
+// ════════════════════════════════════════════════════════════
+const CMD_RL=25,CMD_FLUX=57,CMD_CAN_FWD=34,CMD_SET_DUTY=5,VESC_GET_VALUES=4;
+function crc16(d){let c=0;for(let b of d){c^=b<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021):(c<<1);}return c&0xFFFF;}
+function packet(p){const c=crc16(p);return new Uint8Array([2,p.length,...p,c>>8,c&0xFF,3]);}
+function buildDutyCANSlave(duty,sid){duty=Math.max(-1,Math.min(1,duty));const raw=Math.round(duty*100000),u=(raw>>>0);return packet([CMD_CAN_FWD,sid&0xFF,CMD_SET_DUTY,(u>>24)&0xFF,(u>>16)&0xFF,(u>>8)&0xFF,u&0xFF]);}
+function buildStop(sid){return buildDutyCANSlave(0,sid);}
+function buildRLCmd(){return packet([CMD_RL]);}
+function buildFluxCmd(cur,erpm,duty,R,L){
+  function put32s(a,v){const u=((v<0?v+0x100000000:v)>>>0);a.push((u>>24)&0xFF,(u>>16)&0xFF,(u>>8)&0xFF,u&0xFF);}
+  function putS(a,v,s){put32s(a,Math.round(v*s));}
+  const p=[CMD_FLUX];putS(p,cur,1e3);putS(p,erpm,1e3);putS(p,duty,1e3);putS(p,R/1000,1e6);putS(p,L/1e6,1e8);
+  return packet(p);
+}
+function readS32(p,o){const ab=new ArrayBuffer(4),dv=new DataView(ab);[0,1,2,3].forEach(i=>dv.setUint8(i,p[o+i]));return dv.getInt32(0,false);}
+function readS16(p,o){let v=(p[o]<<8)|p[o+1];if(v&0x8000)v-=0x10000;return v;}
+function readU16(p,o){return(p[o]<<8)|p[o+1];}
+
+// VESC USB vendor/product filters (STM)
+const VESC_FILTERS=[{usbVendorId:0x0483,usbProductId:0x5740},{usbVendorId:0x0483,usbProductId:0x5720},{usbVendorId:0x0483}];
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let port=null,reader=null,writer=null,rxBuf=[];
+let connected=false,pollTimer=null,pollCount=0;
+let currentTach=null,currentVolt=null,currentFault=0,currentFlux=null;
+let autoRunning=false,autoAborted=false;
+let pendingRL=null,pendingFlux=null;
+let sessionSteps=0,sessionTachTotal=0,sessionOv=0,sessionStick=0,sessionInitFlux=null;
+let sessionInitFluxTs=null,sessionFinalFluxTs=null;
+let lastSession=null;   // last completed run, stored when Save is pressed
+let sessionFineIter=0,sessionStepHistory=[];
+let k_est=0.009,lastMoveDir=1;
+let lastRL={R:null,L:null};
+
+// ════════════════════════════════════════════════════════════
+// SERIAL — VESC USB ONLY
+// ════════════════════════════════════════════════════════════
+async function doConnect(){
+  try{
+    let selectedPort=null;
+    try{selectedPort=await navigator.serial.requestPort({filters:VESC_FILTERS});log('VESC USB device selected','ok');}
+    catch(e){
+      log('No VESC USB match — showing all ports','inf');
+      selectedPort=await navigator.serial.requestPort();
+    }
+    port=selectedPort;
+    await port.open({baudRate:115200});
+    writer=port.writable.getWriter();
+    reader=port.readable.getReader();
+    connected=true;
+    document.getElementById('connDot').className='conn-dot ok';
+    document.getElementById('connTxt').textContent='Connected';
+    document.getElementById('btnConnect').disabled=true;
+    ['btnDisc','btnRL','btnFlux','btnPollStart'].forEach(id=>document.getElementById(id).disabled=false);
+    log('Serial opened @ 115200 — VESC connected','ok');
+    rxLoop();
+  }catch(e){
+    if(e.name!=='NotFoundError')log('Connect failed: '+e.message,'er');
+    else log('No port selected','inf');
+  }
+}
+async function doDisconnect(){
+  autoAborted=true;autoRunning=false;stopPoll();
+  try{if(reader){await reader.cancel();reader.releaseLock();reader=null;}
+      if(writer){writer.releaseLock();writer=null;}
+      if(port){await port.close();port=null;}}catch(e){}
+  connected=false;
+  document.getElementById('connDot').className='conn-dot';
+  document.getElementById('connTxt').textContent='Disconnected';
+  document.getElementById('btnConnect').disabled=false;
+  ['btnDisc','btnRL','btnFlux','btnPollStart','btnPollStop','btnAutoStart','btnFwd','btnRev'].forEach(id=>document.getElementById(id).disabled=true);
+  log('Disconnected','inf');
+}
+async function rxLoop(){
+  while(connected){
+    try{
+      const{value,done}=await reader.read();
+      if(done)break;
+      for(let b of value)rxBuf.push(b);
+      while(rxBuf.length>5){
+        if(rxBuf[0]!==2){rxBuf.shift();continue;}
+        const len=rxBuf[1];
+        if(rxBuf.length<len+5)break;
+        handlePacket(rxBuf.slice(2,2+len));
+        rxBuf=rxBuf.slice(len+5);
+      }
+    }catch(e){if(connected)log('RX err: '+e.message,'er');break;}
+  }
+}
+function handlePacket(p){
+  if(p[0]===CMD_RL){
+    const R=readS32(p,1)/1000,L=readS32(p,5)/1000;
+    lastRL={R,L};
+    document.getElementById('rVal').textContent=R.toFixed(2);
+    document.getElementById('lVal').textContent=L.toFixed(2);
+    document.getElementById('fRes').value=R.toFixed(3);
+    document.getElementById('fInd').value=L.toFixed(3);
+    log('R='+R.toFixed(3)+'mΩ  L='+L.toFixed(3)+'µH','ok');
+    if(R>parseFloat(document.getElementById('pHighR').value))log('⚠ HIGH-R: '+R.toFixed(2)+'mΩ','er');
+    if(pendingRL){pendingRL({R,L});pendingRL=null;}
+    return;
+  }
+  if(p[0]===CMD_FLUX){
+    const flux=readS32(p,1)/1e7*1000;
+    currentFlux=flux;updateFluxDisplay(flux);
+    log('Flux='+flux.toFixed(3)+'mWb','ok');
+    if(pendingFlux){pendingFlux(flux);pendingFlux=null;}
+    return;
+  }
+  if(p[0]===CMD_CAN_FWD&&p[2]===VESC_GET_VALUES){parseGetValues(p.slice(3));return;}
+  if(p[0]===VESC_GET_VALUES){parseGetValues(p.slice(1));return;}
+}
+function parseGetValues(d){
+  if(d.length<20)return;
+  let duty,rpm,vin,tach,fault;
+  const nl=d.length>=53&&readU16(d,26)/10>0.5&&readU16(d,26)/10<120;
+  if(nl){duty=readS16(d,20)/1000;rpm=Math.round(readS32(d,22)/7);vin=readU16(d,26)/10;tach=readS32(d,44);fault=d[52];}
+  else{duty=readS16(d,12)/1000;rpm=Math.round(readS32(d,14)/7);vin=readU16(d,18)/10;tach=d.length>=40?readS32(d,36):0;fault=d.length>=45?d[44]:0;}
+  currentTach=tach;currentVolt=vin;currentFault=fault;
+  updateTachDisplay(tach,vin,fault);
+  if(rpm&&vin&&vin>0)document.getElementById('rpmVal').textContent=(rpm/vin).toFixed(1);
+}
+
+// ════════════════════════════════════════════════════════════
+// POLLING
+// ════════════════════════════════════════════════════════════
+function startPoll(){
+  if(pollTimer)return;
+  const sid=parseInt(document.getElementById('slaveId').value)||6927;
+  const ms=parseInt(document.getElementById('pollMs').value)||200;
+  document.getElementById('btnPollStart').disabled=true;
+  document.getElementById('btnPollStop').disabled=false;
+  document.getElementById('btnAutoStart').disabled=false;
+  document.getElementById('btnFwd').disabled=false;
+  document.getElementById('btnRev').disabled=false;
+  const lt=document.getElementById('liveTag');
+  lt.textContent='LIVE';lt.style.color='var(--green)';
+  document.getElementById('liveCtDot').classList.add('live');
+  function poll(){if(!writer)return;pollCount++;document.getElementById('pktsDisp').textContent=pollCount;try{writer.write(packet([CMD_CAN_FWD,sid&0xFF,VESC_GET_VALUES]));}catch(e){}}
+  poll();pollTimer=setInterval(poll,ms);
+  log('Polling slave '+sid+' @ '+ms+'ms','inf');
+}
+function stopPoll(){
+  if(pollTimer){clearInterval(pollTimer);pollTimer=null;}
+  document.getElementById('btnPollStart').disabled=!connected;
+  document.getElementById('btnPollStop').disabled=true;
+  const lt=document.getElementById('liveTag');
+  lt.textContent='IDLE';lt.style.color='var(--text3)';
+  document.getElementById('liveCtDot').classList.remove('live');
+}
+
+// ════════════════════════════════════════════════════════════
+// SAFETY STOP
+// ════════════════════════════════════════════════════════════
+async function safeStop(sid,delayMs){
+  if(!writer)return;
+  log('⛔ SAFETY STOP — zero duty','safe');
+  try{await writer.write(buildStop(sid));}catch(e){}
+  await sleep(delayMs||800);
+}
+
+// ════════════════════════════════════════════════════════════
+// MEASURE (promise-based)
+// ════════════════════════════════════════════════════════════
+function measureRL(){
+  return new Promise(async(res,rej)=>{
+    if(!writer){rej('no writer');return;}
+    const tid=setTimeout(()=>{pendingRL=null;rej('RL timeout');},12000);
+    pendingRL=(v)=>{clearTimeout(tid);res(v);};
+    try{await writer.write(buildRLCmd());}catch(e){clearTimeout(tid);pendingRL=null;rej(e);}
+  });
+}
+function measureFlux(){
+  return new Promise(async(res,rej)=>{
+    if(!writer){rej('no writer');return;}
+    const cur=parseFloat(document.getElementById('fCurrent').value);
+    const erpm=parseFloat(document.getElementById('fErpm').value);
+    const duty=parseFloat(document.getElementById('fDuty').value);
+    const R=parseFloat(document.getElementById('fRes').value);
+    const L=parseFloat(document.getElementById('fInd').value);
+    const tid=setTimeout(()=>{pendingFlux=null;rej('Flux timeout');},15000);
+    pendingFlux=(v)=>{clearTimeout(tid);res(v);};
+    try{await writer.write(buildFluxCmd(cur,erpm,duty,R,L));}catch(e){clearTimeout(tid);pendingFlux=null;rej(e);}
+  });
+}
+async function stopThenMeasureFlux(sid,stopDelay){
+  await safeStop(sid,stopDelay||800);
+  try{return await measureFlux();}
+  catch(e){log('Flux attempt 1 failed ('+e+') — retry in 1.5s','hx');await sleep(1500);return await measureFlux();}
+}
+async function measureRL_safe(){
+  const sid=parseInt(document.getElementById('slaveId').value)||6927;
+  const sd=parseInt(document.getElementById('pStopDelay').value)||800;
+  await safeStop(sid,sd);
+  try{await measureRL();}catch(e){log('RL err: '+e,'er');}
+}
+async function measureFlux_safe(){
+  const sid=parseInt(document.getElementById('slaveId').value)||6927;
+  const sd=parseInt(document.getElementById('pStopDelay').value)||800;
+  try{await stopThenMeasureFlux(sid,sd);}catch(e){log('Flux err: '+e,'er');}
+}
+
+// ════════════════════════════════════════════════════════════
+// MOTOR MOVE — fixed duty 0.05
+// ════════════════════════════════════════════════════════════
+const FIXED_DUTY=0.05;
+const MAX_FINE_ITER=3;
+
+async function motorMove(tachSteps,sid){
+  return new Promise(async(resolve)=>{
+    if(!writer||currentTach===null){resolve(0);return;}
+    const startTach=currentTach;
+    const absDelta=Math.abs(tachSteps);
+    const dir=tachSteps>0?1:-1;
+    try{await writer.write(buildDutyCANSlave(FIXED_DUTY*dir,sid));}catch(e){}
+    const t0=Date.now();
+    async function monitor(){
+      while(true){
+        await sleep(40);
+        if(autoAborted)break;
+        if(Date.now()-t0>15000)break;
+        if(currentTach!==null&&Math.abs(currentTach-startTach)>=absDelta)break;
+      }
+      try{await writer.write(buildStop(sid));}catch(e){}
+      await sleep(150);
+      resolve(currentTach-startTach);
+    }
+    monitor();
+  });
+}
+async function manualStep(dir){
+  const offset=parseInt(document.getElementById('manualOffset').value)||10;
+  const sid=parseInt(document.getElementById('slaveId').value)||6927;
+  log('Manual: '+(dir>0?'FWD':'REV')+' '+offset+' tach @ '+FIXED_DUTY,'inf');
+  await motorMove(offset*dir,sid);
+  await sleep(500);
+}
+
+// ════════════════════════════════════════════════════════════
+// DISPLAY
+// ════════════════════════════════════════════════════════════
+function updateFluxDisplay(flux){
+  const hero=document.getElementById('fluxHero');
+  const target=parseFloat(document.getElementById('pTarget').value)||9.75;
+  const band=0.025;
+  const lo=target-band,hi=target+band;
+  hero.textContent=flux.toFixed(3);
+  hero.className='flux-hero';
+  if(flux>=lo&&flux<=hi)hero.classList.add('pass');
+  else if(Math.abs(flux-target)<0.15)hero.classList.add('warn');
+  else if(flux>10.5||flux<7.0)hero.classList.add('fail');
+  const rL=7.5,rH=10.5;
+  const pct=Math.min(Math.max((flux-rL)/(rH-rL),0),1)*100;
+  document.getElementById('tbarNeedle').style.left=pct+'%';
+  const zL=((lo-rL)/(rH-rL))*100;
+  const zW=((hi-lo)/(rH-rL))*100;
+  document.getElementById('tbarZone').style.left=zL+'%';
+  document.getElementById('tbarZone').style.width=zW+'%';
+  const err=Math.abs(flux-target);
+  document.getElementById('errorVal').textContent=(flux-target).toFixed(3)+' mWb';
+  document.getElementById('errorFill').style.width=Math.min(err/0.5*100,100)+'%';
+}
+function updateTachDisplay(tach,vin,fault){
+  document.getElementById('tachDisp').textContent=tach.toLocaleString();
+  document.getElementById('voltDisp').textContent=vin!=null?vin.toFixed(1):'—';
+  const fd=document.getElementById('faultDisp');
+  fd.textContent=fault===0?'OK':'F'+fault;
+  fd.style.color=fault===0?'var(--green)':'var(--red)';
+  const TMAX=100000,GLEN=267;
+  const ratio=Math.min(Math.abs(tach)/TMAX,1);
+  const fill=GLEN*ratio;
+  const gf=document.getElementById('gaugeFill');
+  gf.style.strokeDasharray=fill+' '+(GLEN-fill);
+  const col=ratio<0.5?'var(--accent)':ratio<0.8?'var(--orange)':'var(--red)';
+  gf.style.stroke=col;
+  document.getElementById('gaugePct').textContent=Math.round(ratio*100)+'%';
+  document.getElementById('gaugePct').setAttribute('fill',col);
+}
+function setPhase(phase,detail,color){
+  color=color||'var(--accent)';
+  document.getElementById('autoPhase').textContent=phase;
+  document.getElementById('autoPhase').style.color=color;
+  document.getElementById('autoDetail').textContent=detail||'';
+  const tag=document.getElementById('autoModeTag');
+  tag.textContent=phase.split(' ')[0];tag.style.color=color;
+}
+function setPhasePill(active){
+  const pills=['phaseRL','phaseInit','phaseCoarse','phaseFine','phaseVerify'];
+  pills.forEach((id,i)=>{
+    const el=document.getElementById(id);if(!el)return;
+    const idx=pills.indexOf(active);
+    el.className='phase-pill'+(i===idx?' active':i<idx?' done':'');
+  });
+}
+function addStepChip(delta,dir,isStick){
+  const chips=document.getElementById('stepChips');
+  if(chips.querySelector('span[style]'))chips.innerHTML='';
+  const c=document.createElement('span');
+  c.className='chip'+(dir<0?' rev':'')+(isStick?' stick':'');
+  c.textContent=(dir>0?'+':'')+delta;
+  chips.appendChild(c);
+  while(chips.children.length>20)chips.removeChild(chips.firstChild);
+}
+function updateKest(v){
+  k_est=v;
+  document.getElementById('kestVal').textContent=v.toFixed(4);
+  document.getElementById('sKest').textContent=v.toFixed(4);
+  const pct=Math.min(Math.max((v-0.003)/(0.020-0.003),0),1)*100;
+  document.getElementById('kestFill').style.width=pct+'%';
+}
+function updateProgress(flux,target){
+  const initFlux=sessionInitFlux||8.0;
+  const totalRange=Math.max(Math.abs(target-initFlux),0.1);
+  const done=Math.min(Math.abs(flux-initFlux)/totalRange,1)*100;
+  document.getElementById('progFill').style.width=done+'%';
+  document.getElementById('progFill').style.background=done>=95?'var(--green)':done>=60?'var(--orange)':'var(--accent)';
+  document.getElementById('progLbl').textContent=done.toFixed(0)+'%';
+}
+function stepFillAnim(tach){
+  const pct=Math.min(Math.abs(tach)/200*100,100);
+  document.getElementById('stepFill').style.width=pct+'%';
+  document.getElementById('stepVal').textContent=tach+' tach';
+}
+function updateStats(elapsed){
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('sSSteps',sessionSteps);
+  s('sFineIter',sessionFineIter+' / '+MAX_FINE_ITER);
+  s('sTachTotal',sessionTachTotal);
+  s('sDir',lastMoveDir>0?'FWD':'REV');s('sKest',k_est.toFixed(4));
+  s('sOv',sessionOv);s('sStick',sessionStick);
+  if(elapsed!==undefined)s('sElapsed',elapsed+'s');
+  if(sessionInitFlux!==null)s('sInitFlux',sessionInitFlux.toFixed(3)+' mWb');
+  if(currentFlux!==null)s('sFinalFlux',currentFlux.toFixed(3)+' mWb');
+}
+
+// ════════════════════════════════════════════════════════════
+// ONLINE DATABASE (Python Flask + SQLite) + LOCAL CACHE FALLBACK
+// ════════════════════════════════════════════════════════════
+// ┌─────────────────────────────────────────────────────────┐
+// │ DEVELOPER: set the server address here.                  │
+// │ Local PC:        'http://localhost:5000/api'             │
+// │ Another machine: 'http://<server-pc-ip>:5000/api'        │
+// │ Hosted server:   'https://your-domain.com/api'           │
+// └─────────────────────────────────────────────────────────┘
+const API_URL='/api';
+// ════════════════════════════════════════════════════════════
+const CACHE_KEY='airgap_records_v3';  // local mirror / offline fallback
+
+let API=API_URL;                      // active API base
+let RECORDS=[];                       // in-memory source of truth for the table
+
+function online(){return !!API;}
+
+// — local cache (offline fallback) —
+function cacheLoad(){try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'[]');}catch(e){return[];}}
+function cacheSave(rows){localStorage.setItem(CACHE_KEY,JSON.stringify(rows));}
+
+function apiBase(){return API.replace(/\/+$/,'');}
+const JSON_HEADERS={'Content-Type':'application/json'};
+
+function setMode(label,cls){
+  const lbl=document.getElementById('dbModeLabel');if(lbl)lbl.textContent=label;
+  const dot=document.getElementById('dbDot');if(dot)dot.className='ct-dot '+(cls||'');
+}
+
+// — load all records (from server if reachable, else local cache) —
+async function loadRecords(){
+  if(online()){
+    try{
+      setMode('Online · loading…','');
+      const res=await fetch(apiBase()+'/records');
+      if(!res.ok)throw new Error('HTTP '+res.status+' '+(await res.text()));
+      RECORDS=await res.json();
+      cacheSave(RECORDS);                       // mirror locally
+      setMode('Online ✓ (server)','live');
+      log('Loaded '+RECORDS.length+' records from server','ok');
+    }catch(e){
+      RECORDS=cacheLoad();
+      setMode('Offline — server unreachable, using cache','er');
+      log('Server load failed ('+e.message+') — showing local cache. Is server.py running?','er');
+    }
+  }else{
+    RECORDS=cacheLoad();
+    setMode('Local only — not connected','er');
+  }
+  renderTable();
+}
+
+// — save one record —
+async function saveRecord(payload){
+  payload.timestamp=payload.timestamp||new Date().toISOString();
+  if(online()){
+    try{
+      const res=await fetch(apiBase()+'/record',{
+        method:'POST',headers:JSON_HEADERS,body:JSON.stringify(payload)
+      });
+      if(!res.ok)throw new Error('HTTP '+res.status+' '+(await res.text()));
+      const saved=await res.json();
+      const updated=res.status===200;
+      RECORDS=RECORDS.filter(r=>String(r.id)!==String(saved.id));  // drop old copy of this row
+      RECORDS.unshift(saved);                                       // newest on top
+      cacheSave(RECORDS);renderTable();
+      const rw=(saved.rework_count>1)?(' (rework #'+saved.rework_count+')'):'';
+      log('DB '+(updated?'updated same row':'saved new row')+' — id: '+saved.id+rw,'ok');
+      showDbBanner((updated?'✓ Updated same row'+rw+' — ID: ':'✓ Saved new row — ID: ')+saved.id,'saved');
+      return saved.id;
+    }catch(e){
+      log('Online save failed ('+e.message+') — saved to local cache','er');
+      showDbBanner('⚠ Saved LOCALLY (offline) — reconnect to sync','err');
+      return saveLocalFallback(payload);
+    }
+  }
+  showDbBanner('⚠ Not connected — saved LOCALLY only','err');
+  return saveLocalFallback(payload);
+}
+function saveLocalFallback(payload){
+  // mirror the server's upsert: same motor+type => same cached row
+  const rtype=payload.record_type||'auto_tune';
+  const idx=RECORDS.findIndex(r=>r.motor_no===payload.motor_no&&(r.record_type||'auto_tune')===rtype);
+  if(idx>=0){
+    payload.id=RECORDS[idx].id;
+    payload.rework_count=(RECORDS[idx].rework_count||1)+1;
+    RECORDS.splice(idx,1);
+  }else{
+    payload.id=payload.id||('local-'+Date.now());
+    payload.rework_count=1;
+  }
+  RECORDS.unshift(payload);cacheSave(RECORDS);renderTable();
+  return payload.id;
+}
+// keep old name working
+function saveToLocalDB(payload){return saveRecord(payload);}
+
+// ── manual save controls ──
+function setSaveReady(ready){
+  const b=document.getElementById('btnSaveDb');
+  if(!b)return;
+  b.disabled=!ready;
+  b.classList.toggle('btn-primary',ready);
+  b.classList.toggle('btn-ghost',!ready);
+}
+async function saveCurrentSession(){
+  if(!lastSession){log('Nothing to save yet — run an adjustment first','er');return;}
+  const b=document.getElementById('btnSaveDb');
+  if(b){b.disabled=true;b.textContent='💾  Saving…';}
+  await saveRecord(lastSession);
+  if(b){b.textContent='✓  Saved';}
+  setTimeout(()=>{if(b)b.textContent='💾   Save to Database';setSaveReady(false);},1200);
+}
+
+function showDbBanner(msg,cls){
+  const el=document.getElementById('dbBanner');
+  if(el){el.textContent=msg;el.className='db-banner '+cls;}
+}
+
+function renderTable(){
+  const rows=RECORDS;
+  const f=document.getElementById('dbFilter').value.trim().toLowerCase();
+  const filtered=f?rows.filter(r=>r.motor_no&&r.motor_no.toLowerCase().includes(f)):rows;
+  document.getElementById('dbCount').textContent=filtered.length+' record'+(filtered.length!==1?'s':'');
+  if(!filtered.length){document.getElementById('dbContainer').innerHTML='<div class="tbl-empty">No records yet</div>';return;}
+  const tsShort=t=>t?String(t).replace('T',' ').replace(/\..*$/,'').slice(0,19):'—';
+  const fx=v=>v!=null?Number(v).toFixed(3):'—';
+  let html=`<table><thead><tr>
+    <th>ID</th><th>Motor No</th><th>Type</th><th>Target</th><th>Verify mWb</th>
+    <th>Init mWb</th><th>Init ts</th><th>Final mWb</th><th>Final ts</th><th>Δ Flux mWb</th>
+    <th>Error mWb</th><th>Result</th><th>Reworks</th><th>Steps</th><th>Conv≤3</th>
+    <th>Dir</th><th>Tach cum</th><th>Tach Δ</th><th>R mΩ</th><th>L µH</th>
+    <th>Notes</th><th>Timestamp</th><th></th>
+  </tr></thead><tbody>`;
+  filtered.forEach(r=>{
+    const resultClass=r.result==='PASS'?'pass':'fail';
+    const initF=r.flux_linkage_initial_mwb!=null?r.flux_linkage_initial_mwb:r.initial_flux_mwb;
+    const finalF=r.flux_linkage_final_mwb!=null?r.flux_linkage_final_mwb:r.final_flux_mwb;
+    html+=`<tr>
+      <td class="c-a">${r.id}</td>
+      <td class="c-gg">${r.motor_no||'—'}</td>
+      <td style="color:var(--text2);">${r.record_type||'—'}</td>
+      <td>${fx(r.target_flux_mwb)}</td>
+      <td class="c-a">${fx(r.verify_flux_mwb)}</td>
+      <td>${fx(initF)}</td>
+      <td style="color:var(--text3);">${tsShort(r.flux_initial_ts)}</td>
+      <td class="c-g">${fx(finalF)}</td>
+      <td style="color:var(--text3);">${tsShort(r.flux_final_ts)}</td>
+      <td class="c-o">${r.flux_delta_mwb!=null?Number(r.flux_delta_mwb).toFixed(4):'—'}</td>
+      <td class="c-o">${r.flux_error_final!=null?Number(r.flux_error_final).toFixed(4):'—'}</td>
+      <td><span class="res-badge ${resultClass}">${r.result||'—'}</span></td>
+      <td class="${r.rework_count>1?'c-o':''}">${r.rework_count!=null?('×'+r.rework_count):'×1'}</td>
+      <td>${r.auto_iterations!=null?r.auto_iterations:'—'}</td>
+      <td class="${r.converged_in_3?'c-g':'c-o'}">${r.converged_in_3?'YES ⚡':'NO'}</td>
+      <td>${r.direction||'—'}</td>
+      <td>${r.tach_cumulative!=null?r.tach_cumulative:'—'}</td>
+      <td>${r.tach_delta!=null?r.tach_delta:'—'}</td>
+      <td>${r.resistance_mohm!=null?Number(r.resistance_mohm).toFixed(2):'—'}</td>
+      <td>${r.inductance_uh!=null?Number(r.inductance_uh).toFixed(2):'—'}</td>
+      <td style="color:var(--text2);">${r.motor_notes||'—'}</td>
+      <td style="color:var(--text3);">${tsShort(r.timestamp)}</td>
+      <td><button class="del-btn" onclick="deleteRecord('${r.id}')">✕</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('dbContainer').innerHTML=html;
+}
+async function deleteRecord(id){
+  if(!confirm('Delete record '+id+'?'))return;
+  if(online()&&String(id).indexOf('local-')!==0){
+    try{
+      const res=await fetch(apiBase()+'/record/'+encodeURIComponent(id),{method:'DELETE'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      log('DB: deleted #'+id+' online','inf');
+    }catch(e){log('Online delete failed: '+e.message,'er');return;}
+  }
+  RECORDS=RECORDS.filter(r=>String(r.id)!==String(id));
+  cacheSave(RECORDS);renderTable();
+}
+async function clearAllDB(){
+  if(!confirm('Delete ALL records? This cannot be undone.'))return;
+  if(online()){
+    try{
+      const res=await fetch(apiBase()+'/records',{method:'DELETE'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      log('DB: all online records cleared','inf');
+    }catch(e){log('Online clear failed: '+e.message,'er');return;}
+  }
+  RECORDS=[];localStorage.removeItem(CACHE_KEY);renderTable();
+}
+function exportCSV(){
+  const f=document.getElementById('dbFilter').value.trim().toLowerCase();
+  const data=f?RECORDS.filter(r=>r.motor_no&&r.motor_no.toLowerCase().includes(f)):RECORDS;
+  if(!data.length){alert('No records to export');return;}
+  const cols=['id','motor_no','motor_notes','record_type','timestamp','tach_cumulative','tach_delta','direction','resistance_mohm','inductance_uh','flux_linkage_initial_mwb','flux_initial_ts','flux_linkage_final_mwb','flux_final_ts','flux_delta_mwb','flux_linkage_mwb','target_flux_mwb','verify_flux_mwb','flux_error_final','result','auto_iterations','converged_in_3','k_est_final','overshoots','stick_slips','elapsed_sec'];
+  const esc=v=>{if(v===null||v===undefined)return '';const s=String(v);return(s.includes(',')||s.includes('"')||s.includes('\n'))?`"${s.replace(/"/g,'""')}"`:s;};
+  const csv=cols.join(',')+'\n'+data.map(r=>cols.map(c=>esc(r[c])).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`airgap_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  log('Exported '+data.length+' records to CSV','ok');
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILITY
+// ════════════════════════════════════════════════════════════
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function sign(v){return v>0?1:v<0?-1:0;}
+function log(msg,cls){
+  cls=cls||'inf';
+  const el=document.getElementById('logBox');
+  const line=document.createElement('div');
+  line.className=cls;
+  const t=new Date();
+  const ts=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0')+'.'+String(t.getMilliseconds()).padStart(3,'0');
+  line.textContent='['+ts+'] '+msg;
+  el.appendChild(line);el.scrollTop=el.scrollHeight;
+}
+function clearLog(){document.getElementById('logBox').innerHTML='';}
+function copyLog(){
+  const lines=Array.from(document.querySelectorAll('#logBox div')).map(d=>d.textContent);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>log('Log copied','ok'));
+}
+
+// ════════════════════════════════════════════════════════════
+// AUTO ADJUSTMENT — v3
+// ════════════════════════════════════════════════════════════
+async function startAutoAdjust(){
+  if(autoRunning)return;
+  if(!writer||currentTach===null){log('Not connected or no tach — start polling first','er');return;}
+
+  autoRunning=true;autoAborted=false;
+  lastSession=null;setSaveReady(false);
+  sessionSteps=0;sessionTachTotal=0;sessionOv=0;sessionStick=0;
+  sessionInitFlux=null;sessionFineIter=0;sessionStepHistory=[];
+  document.getElementById('stepChips').innerHTML='';
+  document.getElementById('resultBadge').className='result-badge';
+  document.getElementById('dbBanner').className='db-banner';
+  document.getElementById('conv3Badge').className='conv3-badge';
+  document.getElementById('btnAutoStart').disabled=true;
+  document.getElementById('btnAutoStop').disabled=false;
+
+  const P={
+    target:      parseFloat(document.getElementById('pTarget').value)||9.75,
+    band:        0.050,
+    dead:        parseFloat(document.getElementById('pDead').value)||0.020,
+    k_nom:       parseFloat(document.getElementById('pKnom').value)||0.009,
+    alpha:       parseFloat(document.getElementById('pAlpha').value)||0.45,
+    k_min:       parseFloat(document.getElementById('pKmin').value)||0.003,
+    k_max:       parseFloat(document.getElementById('pKmax').value)||0.020,
+    coarseMax:   parseInt(document.getElementById('pCoarseMax').value)||180,
+    coarseMin:   parseInt(document.getElementById('pCoarseMin').value)||30,
+    fineMax:     parseInt(document.getElementById('pFineMax').value)||10,
+    fineMin:     parseInt(document.getElementById('pFineMin').value)||1,
+    ovMax:       parseInt(document.getElementById('pOvMax').value)||5,
+    coarseDelay: parseInt(document.getElementById('pCoarseDelay').value)||2000,
+    fineDelay:   parseInt(document.getElementById('pFineDelay').value)||3000,
+    revDelay:    parseInt(document.getElementById('pRevDelay').value)||3500,
+    verifyDelay: parseInt(document.getElementById('pVerifyDelay').value)||3000,
+    stopDelay:   parseInt(document.getElementById('pStopDelay').value)||800,
+    maxSteps:    parseInt(document.getElementById('pMaxSteps').value)||25,
+    timeout:     parseInt(document.getElementById('pTimeout').value)||300,
+    nearTarget:  parseFloat(document.getElementById('pNearTarget').value)||9.20,
+    overTight:   parseFloat(document.getElementById('pOverTight').value)||10.0,
+    highR:       parseFloat(document.getElementById('pHighR').value)||9.5,
+    sid:         parseInt(document.getElementById('slaveId').value)||6927,
+  };
+  P.lo=P.target-P.band;P.hi=P.target+P.band;
+  P.deadLo=P.target-P.dead;P.deadHi=P.target+P.dead;
+
+  k_est=P.k_nom;updateKest(k_est);
+
+  const t0=Date.now();
+  const elapsed=()=>((Date.now()-t0)/1000).toFixed(1);
+  const tooLong=()=>(Date.now()-t0)/1000>P.timeout;
+  const tooManySteps=()=>sessionSteps>=P.maxSteps;
+
+  let lastError=999,overshootActive=false;
+  let verifyFlux=null,finalResult='FAIL';
+
+  try{
+    // ── PHASE 0: R & L ────────────────────────────────────
+    setPhasePill('phaseRL');
+    setPhase('INIT — R & L','Stopping motor then measuring R & L…','var(--gold)');
+    log('=== AUTO ADJUSTMENT START v3 ===','auto');
+    log('Fixed duty: '+FIXED_DUTY+' | Band: ±'+P.band+' | Target: '+P.target+' mWb','auto');
+    log('Fine max iter: '+MAX_FINE_ITER+' | Verify: 1 read','auto');
+
+    await safeStop(P.sid,P.stopDelay);
+    let rlResult=null;
+    try{rlResult=await measureRL();}catch(e){log('RL failed: '+e+' — continuing','er');}
+    if(autoAborted)throw 'aborted';
+    if(rlResult&&rlResult.R>P.highR)log('⚠ HIGH-R: '+rlResult.R.toFixed(2)+'mΩ','er');
+
+    // ── PHASE 1: Initial flux ─────────────────────────────
+    setPhasePill('phaseInit');
+    setPhase('INIT — Initial Flux','Motor stopped → measuring flux…','var(--gold)');
+    log('Phase 1: STOP → measure initial flux','auto');
+
+    let flux;
+    try{
+      await sleep(P.stopDelay);
+      flux=await measureFlux();
+    }catch(e){log('Initial flux failed: '+e,'er');throw 'flux_fail';}
+    if(autoAborted)throw 'aborted';
+
+    sessionInitFlux=flux;
+    sessionInitFluxTs=new Date().toISOString();
+    log('Initial flux = '+flux.toFixed(3)+' mWb  |  target = '+P.target+' mWb','auto');
+    updateProgress(flux,P.target);updateStats(elapsed());
+
+    // ── MODE DETECTION ────────────────────────────────────
+    let mode;
+    if(flux>=P.lo&&flux<=P.hi){mode='IN_BAND';log('Mode: IN_BAND — already in target','ok');}
+    else if(flux>P.overTight){mode='OVER_TIGHT';log('Mode: OVER_TIGHT — REV primary','hx');}
+    else if(flux>P.nearTarget){mode='NEAR_TARGET';log('Mode: NEAR_TARGET — fine only','hx');}
+    else if(flux<7.0){log('Flux < 7.0 — sensor fault. Aborting.','er');throw 'sensor_fault';}
+    else{mode='NORMAL';log('Mode: NORMAL — coarse then fine','auto');}
+
+    // ── PHASE 2: COARSE ───────────────────────────────────
+    if(mode==='NORMAL'&&Math.abs(P.target-flux)>0.20){
+      setPhasePill('phaseCoarse');
+      setPhase('COARSE — Approach','Proportional step from flux error…','var(--orange)');
+      log('--- COARSE PHASE ---','auto');
+
+      while(!autoAborted&&!tooLong()&&!tooManySteps()){
+        const error=P.target-flux;
+        if(Math.abs(error)<=0.20)break;
+        let steps=Math.round(Math.abs(error)/P.k_nom);
+        steps=clamp(steps,P.coarseMin,P.coarseMax);
+        const dir=sign(error);
+        log('Coarse: flux='+flux.toFixed(3)+' error='+error.toFixed(3)+' → '+(dir>0?'+':'')+(dir*steps)+' tach','auto');
+        setPhase('COARSE — Moving','error='+error.toFixed(3)+' step='+(dir*steps),'var(--orange)');
+        stepFillAnim(dir*steps);
+        const prevFlux=flux;lastMoveDir=dir;
+        await motorMove(dir*steps,P.sid);
+        sessionSteps++;sessionTachTotal+=Math.abs(steps);addStepChip(dir*steps,dir);
+        setPhase('COARSE — Settling','Waiting '+P.coarseDelay+'ms…','var(--orange)');
+        await sleep(P.coarseDelay);
+        if(autoAborted)break;
+        try{flux=await stopThenMeasureFlux(P.sid,P.stopDelay);}catch(e){log('Flux read failed: '+e,'er');break;}
+        const dFlux=Math.abs(flux-prevFlux);const kMeas=dFlux/Math.abs(steps);
+        if(kMeas>=P.k_min&&kMeas<=P.k_max){k_est=P.alpha*kMeas+(1-P.alpha)*k_est;updateKest(k_est);}
+        sessionStepHistory.push({phase:'coarse',step:dir*steps,dir:dir>0?'FWD':'REV',tach:currentTach,flux_after:flux,k_local:parseFloat(kMeas.toFixed(4))});
+        updateProgress(flux,P.target);updateStats(elapsed());
+      }
+    }
+
+    if(autoAborted)throw 'aborted';
+
+    // ── PHASE 3: FINE — MAX 3 ITERATIONS ─────────────────
+    if(mode!=='IN_BAND'){
+      setPhasePill('phaseFine');
+      setPhase('FINE — Iterative (max '+MAX_FINE_ITER+')','Stop → measure → step → repeat…','var(--accent)');
+      log('--- FINE PHASE (max '+MAX_FINE_ITER+' iterations) ---','auto');
+
+      overshootActive=false;lastError=P.target-flux;sessionFineIter=0;
+
+      while(!autoAborted&&!tooLong()&&!tooManySteps()&&sessionFineIter<MAX_FINE_ITER){
+        const error=P.target-flux;
+        if(Math.abs(error)<=P.dead){log('Dead band ✓ flux='+flux.toFixed(3)+' after '+sessionFineIter+' iter','ok');break;}
+        if(flux>=P.lo&&flux<=P.hi){log('In band ✓ flux='+flux.toFixed(3)+' after '+sessionFineIter+' iter','ok');break;}
+        sessionFineIter++;updateStats(elapsed());
+        log('Fine iter '+sessionFineIter+'/'+MAX_FINE_ITER+': flux='+flux.toFixed(3)+' error='+error.toFixed(4),'auto');
+
+        const stepCap=overshootActive?P.ovMax:P.fineMax;
+        let steps;
+        if(mode==='OVER_TIGHT'){steps=-clamp(Math.round(Math.abs(error)/k_est),P.fineMin,15);}
+        else{steps=clamp(Math.round(Math.abs(error)/k_est),P.fineMin,stepCap)*sign(error);}
+
+        const dirChanged=(sign(steps)!==lastMoveDir);
+        log('Fine '+sessionFineIter+': step '+(steps>0?'+':'')+steps+(dirChanged?' [DIR CHANGE]':''),'auto');
+        setPhase('FINE '+sessionFineIter+'/'+MAX_FINE_ITER+' — Moving','step='+steps+' k='+k_est.toFixed(4),'var(--accent)');
+        stepFillAnim(steps);
+
+        const prevFlux=flux;lastMoveDir=sign(steps);
+        await motorMove(steps,P.sid);
+        sessionSteps++;sessionTachTotal+=Math.abs(steps);addStepChip(steps,sign(steps));
+
+        const settleDelay=dirChanged?P.revDelay:P.fineDelay;
+        setPhase('FINE '+sessionFineIter+'/'+MAX_FINE_ITER+' — Settling','Stop → wait '+settleDelay+'ms → measure','var(--accent)');
+        await sleep(settleDelay);
+        if(autoAborted)break;
+
+        try{flux=await stopThenMeasureFlux(P.sid,P.stopDelay);}catch(e){log('Flux read failed: '+e,'er');break;}
+
+        const dFlux=Math.abs(flux-prevFlux);const kMeas=dFlux/Math.abs(steps);
+        if(kMeas<P.k_min){log('Stick-slip detected','hx');sessionStick++;addStepChip(steps,sign(steps),true);}
+        else if(kMeas>P.k_max){log('Sensitivity spike — ignoring','hx');}
+        else{k_est=P.alpha*kMeas+(1-P.alpha)*k_est;updateKest(k_est);}
+
+        const newError=P.target-flux;
+        if(sign(newError)!==sign(lastError)&&Math.abs(steps)>0){log('Overshoot detected → cap '+P.ovMax,'hx');sessionOv++;overshootActive=true;}
+        else overshootActive=false;
+        lastError=newError;
+
+        sessionStepHistory.push({phase:'fine',iter:sessionFineIter,step:steps,dir:steps>0?'FWD':'REV',tach:currentTach,flux_after:flux,k_local:parseFloat(kMeas.toFixed(4))});
+        updateProgress(flux,P.target);updateStats(elapsed());
+      }
+      if(sessionFineIter>=MAX_FINE_ITER&&!(flux>=P.lo&&flux<=P.hi))log('Fine iteration cap ('+MAX_FINE_ITER+') reached — flux='+flux.toFixed(3),'hx');
+    }
+
+    if(autoAborted)throw 'aborted';
+
+    // ── PHASE 4: VERIFY — SINGLE READ ─────────────────────
+    setPhasePill('phaseVerify');
+    setPhase('VERIFY — Single Read','Settling '+P.verifyDelay+'ms then one measure…','var(--purple)');
+    log('--- VERIFY PHASE (1 read) ---','auto');
+
+    let pass=false;
+    log('Verify: settle '+P.verifyDelay+'ms…','auto');
+    await sleep(P.verifyDelay);
+    if(!autoAborted){
+      try{
+        await safeStop(P.sid,200);
+        verifyFlux=await measureFlux();
+        sessionFinalFluxTs=new Date().toISOString();
+        const inBand=verifyFlux>=P.lo&&verifyFlux<=P.hi;
+        log('Verify flux='+verifyFlux.toFixed(3)+' band=['+P.lo.toFixed(3)+','+P.hi.toFixed(3)+'] '+(inBand?'✓ PASS':'✗ OUT'),inBand?'ok':'er');
+        document.getElementById('sVerifyFlux').textContent=verifyFlux.toFixed(3)+' mWb';
+        pass=inBand;
+        if(!pass&&currentFlux!==null&&currentFlux>=P.lo&&currentFlux<=P.hi){log('Accepting: live flux in band','ok');pass=true;}
+      }catch(e){log('Verify flux failed: '+e,'er');}
+    }
+
+    if(tooManySteps()){log('Max steps ('+P.maxSteps+') — FAIL','er');pass=false;}
+    if(tooLong()){log('Timeout ('+P.timeout+'s) — FAIL','er');pass=false;}
+
+    // ── RESULT ────────────────────────────────────────────
+    const conv3=sessionSteps<=3&&pass;
+    finalResult=pass?'PASS':'FAIL';
+
+    const badge=document.getElementById('resultBadge');
+    if(pass){
+      badge.className='result-badge pass';
+      badge.innerHTML='✓ PASS<div class="result-sub">Flux: '+((currentFlux||0).toFixed(3))+' mWb &nbsp;|&nbsp; Steps: '+sessionSteps+'  &nbsp;|&nbsp; Fine iter: '+sessionFineIter+'/'+MAX_FINE_ITER+'  &nbsp;|&nbsp; '+elapsed()+'s</div>';
+      setPhase('PASS ✓','Adjustment complete','var(--green)');
+      log('=== PASS ✓ === flux='+((currentFlux||0).toFixed(3))+' steps='+sessionSteps+' fineIter='+sessionFineIter+' t='+elapsed()+'s','pass');
+    }else{
+      badge.className='result-badge fail';
+      badge.innerHTML='✗ FAIL<div class="result-sub">flux='+((currentFlux||0).toFixed(3))+' mWb | fine iter: '+sessionFineIter+'/'+MAX_FINE_ITER+' — manual review</div>';
+      setPhase('FAIL ✗','Manual review needed','var(--red)');
+      log('=== FAIL ✗ === flux='+((currentFlux||0).toFixed(3))+' steps='+sessionSteps+' fineIter='+sessionFineIter+' t='+elapsed()+'s','er');
+    }
+    if(conv3){document.getElementById('conv3Badge').className='conv3-badge show';log('⚡ Converged in ≤3 total steps','pass');}
+    document.getElementById('sConv3').textContent=conv3?'YES ⚡':'NO';
+    updateStats(elapsed());
+
+    // ── PREPARE RECORD (saved manually via the Save button) ──
+    lastSession = {
+      motor_no:                 document.getElementById('motorNo').value||'MTR-001',
+      motor_notes:              document.getElementById('motorNotes').value||'',
+      record_type:              'auto_tune',
+      tach_cumulative:          currentTach,
+      tach_delta:               sessionTachTotal,
+      direction:                lastMoveDir>0?'FWD':'REV',
+      resistance_mohm:          lastRL.R,
+      inductance_uh:            lastRL.L,
+      flux_linkage_initial_mwb: sessionInitFlux,
+      flux_initial_ts:          sessionInitFluxTs,
+      flux_linkage_final_mwb:   currentFlux,
+      flux_final_ts:            sessionFinalFluxTs||new Date().toISOString(),
+      flux_delta_mwb:           (currentFlux!=null&&sessionInitFlux!=null)?(currentFlux-sessionInitFlux):null,
+      flux_linkage_mwb:         currentFlux,
+      tach_moves:               sessionStepHistory.map(s=>s.tach),
+      auto_iterations:          sessionSteps,
+      fine_iterations:          sessionFineIter,
+      converged_in_3:           conv3,
+      initial_flux_mwb:         sessionInitFlux,
+      final_flux_mwb:           currentFlux,
+      flux_error_final:         currentFlux!=null?(currentFlux-P.target):null,
+      k_est_final:              k_est,
+      step_history:             sessionStepHistory,
+      overshoots:               sessionOv,
+      stick_slips:              sessionStick,
+      elapsed_sec:              parseFloat(elapsed()),
+      verify_flux_mwb:          verifyFlux,
+      result:                   finalResult,
+      target_flux_mwb:          P.target,
+      band_mwb:                 P.band,
+    };
+    setSaveReady(true);
+    log('Result ready — press "Save to Database" to store this run','inf');
+
+  }catch(reason){
+    finalResult='ABORTED';
+    if(reason==='aborted'){setPhase('ABORTED','User stopped','var(--red)');log('Aborted by user','er');}
+    else{setPhase('ERROR — '+reason,'','var(--red)');log('Error: '+reason,'er');}
+    if(writer){try{await writer.write(buildStop(parseInt(document.getElementById('slaveId').value)||6927));}catch(e){}}
+  }
+
+  autoRunning=false;
+  document.getElementById('btnAutoStart').disabled=false;
+  document.getElementById('btnAutoStop').disabled=true;
+}
+
+function stopAutoAdjust(){
+  autoAborted=true;autoRunning=false;
+  log('ABORT requested','er');
+  if(writer){const sid=parseInt(document.getElementById('slaveId').value)||6927;try{writer.write(buildStop(sid));}catch(e){}}
+  document.getElementById('btnAutoStart').disabled=false;
+  document.getElementById('btnAutoStop').disabled=true;
+  setPhase('ABORTED','Ready','var(--text2)');
+}
+
+// ── INIT ──
+loadRecords();   // auto-connects to API_URL on page load; falls back to cache if unreachable
+log('VESC Auto Airgap v3 — Flux-Only Drive','ok');
+log('⛔ Motor always stopped before every R&L and flux measurement','safe');
+log('⚡ Fine phase: max '+MAX_FINE_ITER+' iterations | Verify: 1 read','inf');
+log('Fixed duty: 0.05 | Band: ±0.05 mWb | Connect VESC to begin','inf');
+
+// ════════════════════════════════════════════════════════════
+// AMBIENT BACKGROUND — amber particle field + floating orbs
+// ════════════════════════════════════════════════════════════
+(function bgAnim(){
+  const cv=document.getElementById('fxCanvas');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W,H,DPR,parts=[],orbs=[];
+  function size(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR;
+    cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px';
+    build();
+  }
+  function build(){
+    // fine warm particles, denser toward the lower "terrain" band
+    const n=Math.round((innerWidth*innerHeight)/14000);
+    parts=[];
+    for(let i=0;i<n;i++){
+      const band=Math.random();
+      const y=(0.42+band*0.6*Math.random()+0.18)*H;
+      parts.push({
+        x:Math.random()*W, y:Math.min(y,H*1.05),
+        r:(Math.random()*1.4+0.4)*DPR,
+        a:Math.random()*0.5+0.15,
+        tw:Math.random()*Math.PI*2,
+        tws:Math.random()*0.018+0.006,
+        vx:(Math.random()-0.5)*0.06*DPR
+      });
+    }
+    // a few large soft floating orbs (warm + cool accents)
+    const cols=[[255,170,80],[255,210,150],[150,200,255],[255,255,255]];
+    orbs=[];
+    for(let i=0;i<5;i++){
+      const c=cols[i%cols.length];
+      orbs.push({
+        x:Math.random()*W, y:(0.3+Math.random()*0.5)*H,
+        r:(Math.random()*60+45)*DPR, c,
+        a:Math.random()*0.12+0.05,
+        ph:Math.random()*Math.PI*2,
+        sp:Math.random()*0.0004+0.0002,
+        amp:(Math.random()*40+20)*DPR
+      });
+    }
+  }
+  let t=0;
+  function frame(){
+    t+=1;
+    ctx.clearRect(0,0,W,H);
+    // soft orbs (blurred via radial gradient)
+    for(const o of orbs){
+      const ox=o.x+Math.cos(t*o.sp*60+o.ph)*o.amp;
+      const oy=o.y+Math.sin(t*o.sp*47+o.ph)*o.amp*0.6;
+      const g=ctx.createRadialGradient(ox,oy,0,ox,oy,o.r);
+      g.addColorStop(0,`rgba(${o.c[0]},${o.c[1]},${o.c[2]},${o.a})`);
+      g.addColorStop(1,`rgba(${o.c[0]},${o.c[1]},${o.c[2]},0)`);
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(ox,oy,o.r,0,7); ctx.fill();
+    }
+    // particles
+    for(const p of parts){
+      p.tw+=p.tws; p.x+=p.vx;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      const a=p.a*(0.55+0.45*Math.sin(p.tw));
+      ctx.fillStyle=`rgba(255,${150+Math.round(60*p.a)},70,${a})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+    }
+    if(!reduce) requestAnimationFrame(frame);
+  }
+  addEventListener('resize',size,{passive:true});
+  size();
+  if(reduce){ frame(); } else { requestAnimationFrame(frame); }
+})();
+</script>
+</body>
+</html>
