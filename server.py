@@ -1,27 +1,23 @@
 #!/usr/bin/env python3
 """
-VESC Auto Airgap — database server (Render-ready)
+VESC Auto Airgap — database server
 Flask + SQLite. Stores every adjustment session in airgap.db.
 
-Local run:
-    pip install flask flask-cors gunicorn
+Run:
+    pip install flask flask-cors
     python server.py
-
-Render run (Start Command):
-    gunicorn server:app --bind 0.0.0.0:$PORT
-
-This version also serves index.html at "/", so the whole app lives at one URL.
+Then in index.html set API URL to:  http://localhost:5000/api
+(or http://<this-pc-ip>:5000/api from other machines on the LAN)
 """
 
 import os
 import sqlite3
 from datetime import datetime, timezone
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "airgap.db")
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "airgap.db")
 
 # Column name -> SQLite type. This is the single source of truth for the schema.
 COLUMNS = {
@@ -104,12 +100,6 @@ def row_to_dict(row):
             except Exception:
                 pass
     return d
-
-
-# ── serve the frontend at "/" so the whole app lives at one URL ──
-@app.get("/")
-def index():
-    return send_from_directory(BASE_DIR, "index.html")
 
 
 @app.get("/api/health")
@@ -213,11 +203,7 @@ def clear_records():
     return jsonify({"cleared": True})
 
 
-# Create the table at import time so it works under gunicorn on Render
-# (the original code only did this inside __main__, which gunicorn never runs).
-init_db()
-
-
 if __name__ == "__main__":
-    # local dev only; Render uses the gunicorn Start Command instead
+    init_db()
+    # host=0.0.0.0 so other PCs on the network can reach it by IP
     app.run(host="0.0.0.0", port=5000, debug=False)
